@@ -1,21 +1,23 @@
 
-# SimpleInvoice Project
+# GEOGO Booking Project
 
-Simple invoicing webapp called SimpleInvoice
+This Source is server side. Intergrate a booking system
 
 
 ## Installation
 
-Install SimpleInvoice with npm
+Install my-project with npm
 
 ```bash
-  git clone <https://github.com/KioNguyen/SimpleInvoice/>
-  cd SimpleInvoice
-  npm install 
-  npm run dev
+  git clone <project_https_url>
+  cd my-project
+  npm install --legacy-peer-deps
+  npm run start:dev
 ```
     
 ## Tech Stack
 
 **Client:** ReactJS, Material UI, Formik, Vite builder 
+
+**Server:** NodeJS, NestJS, MongoDB
 
