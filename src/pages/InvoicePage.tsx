@@ -336,7 +336,7 @@ export default function InvoicePage() {
             variant="contained"
             onClick={handleOpenModal}
             startIcon={<Iconify icon="eva:plus-fill" />}
-            disabled={true}
+            disabled={false}
           >
             New Invoice
           </Button>

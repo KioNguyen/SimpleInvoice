@@ -19,18 +19,21 @@ export default function Router() {
       path: '/dashboard',
       element: <DashboardLayout />,
       children: [
-        { element: <Navigate to="/dashboard/user" />, index: true },
-        { path: 'user', element: <InvoicePage /> },
+        { element: <Navigate to="/dashboard/invoice" />, index: true },
+        { path: 'invoice', element: <InvoicePage /> },
       ],
     },
     {
-      path: 'login',
-      element: <Navigate to="/dashboard/user" />,
+      path: '/',
+      element: <Navigate to="/dashboard/invoice" />,
     },
+    // {
+    //   path: 'login',
+    //   element: <Navigate to="/dashboard/user" />,
+    // },
     {
       element: <SimpleLayout />,
       children: [
-        { element: <Navigate to="/dashboard/blog" />, index: true },
         { path: '404', element: <Page404 /> },
         { path: '*', element: <Navigate to="/404" /> },
       ],
