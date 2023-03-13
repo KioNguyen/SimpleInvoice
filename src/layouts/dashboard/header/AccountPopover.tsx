@@ -8,7 +8,6 @@ import account from '../../../_mock/account';
 import { AuthContext } from "../../../context/AuthContext";
 import { useNavigate } from 'react-router-dom';
 import { LoginForm } from '../../../sections/auth/login';
-import { RegisterForm } from '../../../sections/auth/register';
 import Iconify from '../../../components/iconify';
 
 // ----------------------------------------------------------------------
@@ -191,106 +190,6 @@ export default function AccountPopover() {
           )
         }
       </Popover>
-
-
-      <div>
-        <Fragment>
-          <Drawer
-            anchor={"right"}
-            open={openLoginDrawer}
-            onClose={toggleDrawer(false)}
-            PaperProps={{
-
-              sx: {
-                width: 500,
-                p: 5
-              }
-            }}
-          >
-            <Container maxWidth="sm">
-              <StyledContent>
-                <Typography variant="h4" gutterBottom>
-                  Sign in to Booking
-                </Typography>
-
-                <Typography variant="body2" sx={{ mb: 5 }}>
-                  Don’t have an account? {''}
-                  <Link variant="subtitle2" sx={{ cursor: "pointer" }} onClick={_ => {
-                    setOpenLoginDrawer(false);
-                    setOpenRegisterDrawer(true);
-                  }}>Get started</Link>
-                </Typography>
-
-                <Stack direction="row" spacing={2}>
-                  <Button fullWidth size="large" color="inherit" variant="outlined" disabled={true}>
-                    <Iconify icon="eva:facebook-fill" color="#1877F2" width={22} height={22} />
-                  </Button>
-
-                  <Button fullWidth size="large" color="inherit" variant="outlined" disabled={true}>
-                    <Iconify icon="eva:twitter-fill" color="#1C9CEA" width={22} height={22} />
-                  </Button>
-                </Stack>
-
-                <Divider sx={{ my: 3 }}>
-                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                    OR
-                  </Typography>
-                </Divider>
-
-                <LoginForm />
-              </StyledContent>
-            </Container>
-          </Drawer>
-
-          <Drawer
-            anchor={"right"}
-            open={openRegisterDrawer}
-            onClose={toggleRegisterDrawer(false)}
-            PaperProps={{
-
-              sx: {
-                width: 500,
-                p: 5
-              }
-            }}
-          >
-            <Container maxWidth="sm">
-              <StyledContent>
-                <Typography variant="h4" gutterBottom>
-                  Sign on to Booking
-                </Typography>
-
-                <Typography variant="body2" sx={{ mb: 5 }}>
-                  Have an account? {''}
-                  <Link variant="subtitle2" sx={{ cursor: "pointer" }} onClick={_ => {
-                    setOpenLoginDrawer(true);
-                    setOpenRegisterDrawer(false);
-                  }}>Let's start</Link>
-                </Typography>
-
-                <Stack direction="row" spacing={2}>
-                  <Button fullWidth size="large" color="inherit" variant="outlined" disabled={true}>
-                    <Iconify icon="eva:facebook-fill" color="#1877F2" width={22} height={22} />
-                  </Button>
-
-                  <Button fullWidth size="large" color="inherit" variant="outlined" disabled={true}>
-                    <Iconify icon="eva:twitter-fill" color="#1C9CEA" width={22} height={22} />
-                  </Button>
-                </Stack>
-
-                <Divider sx={{ my: 3 }}>
-                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                    OR
-                  </Typography>
-                </Divider>
-
-                <RegisterForm onSuccess={(newUser) => handleRegisterSuccess(newUser)} />
-              </StyledContent>
-            </Container>
-          </Drawer>
-
-        </Fragment>
-      </div>
     </>
   );
 }
