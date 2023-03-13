@@ -27,10 +27,6 @@ export default function Router() {
       path: '/',
       element: <Navigate to="/dashboard/invoice" />,
     },
-    // {
-    //   path: 'login',
-    //   element: <Navigate to="/dashboard/user" />,
-    // },
     {
       element: <SimpleLayout />,
       children: [
