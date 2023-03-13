@@ -49,15 +49,6 @@ const StyledContent = styled('div')(({ theme }) => ({
 
 export default function LoginPage() {
   const mdUp = useResponsive('up', 'md', null);
-  const { instance, accounts } = useMsal();
-
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (accounts.length > 0) {
-      navigate('/dashboard');
-    }
-  }, [accounts.length]);
 
   return (
     <>

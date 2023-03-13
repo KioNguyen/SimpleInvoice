@@ -18,7 +18,7 @@ export default function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
 
   const [credentials, setCredentials] = useState({
-    email: "",
+    username: "",
     password: "",
   });
 
@@ -27,15 +27,14 @@ export default function LoginForm() {
   };
 
   const handleClick = async (e) => {
-    e.preventDefault();
+    // e.preventDefault();
     dispatch({ type: "LOGIN_START" });
     try {
       const res = await AuthenService.login(credentials);
       dispatch({ type: "LOGIN_SUCCESS", payload: res.data });
       navigate('/dashboard', { replace: false });
     } catch (err) {
-      console.log("🚀 ~ file: LoginForm.tsx:37 ~ handleClick ~ err", err)
-      dispatch({ type: "LOGIN_FAILURE", payload: err.response.data });
+      dispatch({ type: "LOGIN_FAILURE", payload: err });
     }
 
   };
@@ -44,9 +43,9 @@ export default function LoginForm() {
     <>
       <Stack spacing={3}>
         <TextField
-          name="email"
-          id='email'
-          label="Email address"
+          name="username"
+          id='username'
+          label="Username"
           onChange={handleChange}
         />
 

@@ -58,22 +58,24 @@ const AuthReducer = (state, action) => {
   }
 };
 
-const isValidToken = async (sToken, callbackErr): Promise<void> => {
+const isValidToken = async (tokenInfor, callbackErr): Promise<void> => {
   try {
-    const res = await AuthenService.checkJWT({ jwt: sToken });
+    const res = await AuthenService.checkJWT(tokenInfor);
   } catch (err) {
     callbackErr()
-    console.log("🚀 ~ file: LoginForm.tsx:37 ~ handleClick ~ err", err)
   }
 }
 
 export const AuthContextProvider = ({ children }) => {
   const [state, dispatch] = useReducer(AuthReducer, INITIAL_STATE);
+  localStorage.setItem("user", JSON.stringify(state.user));
   useEffect(() => {
     if (state.user) {
-      isValidToken(state.user?.apiToken, () => dispatch({ type: "LOGOUT" }));
+      isValidToken({
+        apiToken: state.user.apiToken,
+        access_token: state.user.access_token
+      }, () => dispatch({ type: "LOGOUT" }));
     }
-    localStorage.setItem("user", JSON.stringify(state.user));
   }, [state.user]);
 
   return (

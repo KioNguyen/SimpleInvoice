@@ -1,7 +1,11 @@
 import PropTypes from 'prop-types';
 // @mui
 import { styled, alpha } from '@mui/material/styles';
-import { Toolbar, Tooltip, IconButton, Typography, OutlinedInput, InputAdornment } from '@mui/material';
+import {
+  Toolbar, Tooltip, IconButton, Typography, OutlinedInput, InputAdornment,
+  Autocomplete,
+  TextField
+} from '@mui/material';
 // component
 import Iconify from '../../../components/iconify';
 
@@ -36,9 +40,16 @@ InvoiceListToolbar.propTypes = {
   numSelected: PropTypes.number,
   filterName: PropTypes.string,
   onFilterName: PropTypes.func,
+  onFilterStatus: PropTypes.func,
 };
 
-export default function InvoiceListToolbar({ numSelected, filterName, onFilterName, onDeleteIds }) {
+export default function InvoiceListToolbar({ numSelected, filterName, onFilterName, onDeleteIds, onFilterStatus }) {
+
+  const statusOption = {
+    options: ["Paid", "Due", "Overdue"],
+    getOptionLabel: (option: string) => option,
+  };
+
   return (
     <StyledRoot
       sx={{
@@ -53,16 +64,26 @@ export default function InvoiceListToolbar({ numSelected, filterName, onFilterNa
           {numSelected} selected
         </Typography>
       ) : (
-        <StyledSearch
-          value={filterName}
-          onChange={onFilterName}
-          placeholder="Search ..."
-          startAdornment={
-            <InputAdornment position="start">
-              <Iconify icon="eva:search-fill" sx={{ color: 'text.disabled', width: 20, height: 20 }} />
-            </InputAdornment>
-          }
-        />
+        <div style={{ display: "flex", justifyContent: "flex-start" }}>
+          <StyledSearch
+            value={filterName}
+            onChange={onFilterName}
+            placeholder="Search ..."
+            startAdornment={
+              <InputAdornment position="start">
+                <Iconify icon="eva:search-fill" sx={{ color: 'text.disabled', width: 20, height: 20 }} />
+              </InputAdornment>
+            }
+          />
+          <Autocomplete
+            sx={{ pl: 4, width: 250 }}
+            {...statusOption}
+            renderInput={(params) => (
+              <TextField {...params} label="Status" />
+            )}
+            onChange={onFilterStatus}
+          />
+        </div>
       )}
 
       {numSelected > 0 ? (

@@ -41,7 +41,7 @@ export default function Nav({ openNav, onCloseNav }) {
 
   const isDesktop = useResponsive('up', 'lg', null);
   const { instance, accounts } = useMsal();
-  const { user } = useContext(AuthContext)
+  const { user, dispatch } = useContext(AuthContext)
 
   useEffect(() => {
     if (openNav) {
@@ -85,7 +85,7 @@ export default function Nav({ openNav, onCloseNav }) {
 
       <Box sx={{ px: 2.5, pb: 3, mt: 10 }}>
         <Stack alignItems="center" spacing={3} sx={{ pt: 5, borderRadius: 2, position: 'relative' }}>
-          <Button href="https://material-ui.com/store/items/minimal-dashboard/" target="_blank" variant="contained">
+          <Button onClick={() => dispatch({ type: "LOGOUT" })} variant="contained" color='error'>
             Logout
           </Button>
         </Stack>

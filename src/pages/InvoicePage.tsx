@@ -2,7 +2,7 @@ import { Helmet } from "react-helmet-async";
 import { filter, sample } from "lodash";
 import { faker } from "@faker-js/faker";
 import { sentenceCase } from "change-case";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { useFormik } from "formik";
 import * as yup from "yup";
@@ -36,7 +36,7 @@ import {
   Select,
   InputLabel,
   FormControl,
-  CircularProgress,
+  CircularProgress
 } from "@mui/material";
 // components
 import Label from "../components/label";
@@ -46,19 +46,20 @@ import Scrollbar from "../components/scrollbar";
 import { InvoiceListHead, InvoiceListToolbar } from "../sections/@dashboard/user";
 // mock
 
-import * as InvoiceService from "../hooks/user";
+import * as InvoiceService from "../hooks/invoice";
+import { useQuery } from "@tanstack/react-query";
 
 // ----------------------------------------------------------------------
 
 const TABLE_HEAD = [
+  { id: "invoiceNumber", label: "Number", alignRight: false },
   { id: "currency", label: "Currency", alignRight: false },
   { id: "customer", label: "Customer", alignRight: false },
   { id: "invoiceDate", label: "Date", alignRight: false },
   { id: "invoiceGrossTotal", label: "Total", alignRight: false },
   { id: "totalDiscount", label: "Discount", alignRight: false },
   { id: "status", label: "Status", alignRight: false },
-  { id: "type", label: "Type", alignRight: false },
-  { id: "" },
+  { id: "option" },
 ];
 
 const style = {
@@ -85,64 +86,32 @@ const validationSchema = yup.object({
   verified: yup.string(),
 });
 
-function descendingComparator(a, b, orderBy) {
-  if (b[orderBy] < a[orderBy]) {
-    return -1;
-  }
-  if (b[orderBy] > a[orderBy]) {
-    return 1;
-  }
-  return 0;
-}
-
-function getComparator(order, orderBy) {
-  return order === "desc"
-    ? (a, b) => descendingComparator(a, b, orderBy)
-    : (a, b) => -descendingComparator(a, b, orderBy);
-}
-
-function applySortFilter(array, comparator, query) {
-  const stabilizedThis = array.map((el, index) => [el, index]);
-  stabilizedThis.sort((a, b) => {
-    const order = comparator(a[0], b[0]);
-    if (order !== 0) return order;
-    return a[1] - b[1];
-  });
-  if (query) {
-    return filter(
-      array,
-      (_user) => _user.name.toLowerCase().indexOf(query.toLowerCase()) !== -1
-    );
-  }
-  return stabilizedThis.map((el) => el[0]);
-}
 
 export default function InvoicePage() {
   const [open, setOpen] = useState(null);
 
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(0);
 
-  const [order, setOrder] = useState("asc");
+  const [order, setOrder] = useState("");
 
   const [selected, setSelected] = useState([]);
 
-  const [orderBy, setOrderBy] = useState(null);
+  const [orderBy, setOrderBy] = useState("");
 
   const [filterName, setFilterName] = useState("");
 
+  const [isPending, startTransition] = useTransition();
+
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [totalRows, setTotalRows] = useState(10);
+  const [filterStatus, setFilterStatus] = useState("");
 
-  // const [universityDataSource, setUniversityDataSource] = useState([]);
   const [invoiceDataSource, setInvoiceDataSource] = useState([]);
 
-  const [isLoading, setIsLoading] = useState(false);
-
-  const [isCreate, setIsCreate] = useState(false);
-
-  const [isUpdate, setIsUpdate] = useState(false);
-
-  const [isDelete, setIsDelete] = useState(false);
+  const { isLoading, data } = useQuery({
+    queryKey: ['invoice', page + 1, rowsPerPage, order, orderBy, filterName, filterStatus],
+    queryFn: () => InvoiceService.fetchInvoice({ pageNumber: page + 1, pageSize: rowsPerPage, ordering: order, orderBy, keyword: filterName, status: filterStatus })
+  })
 
   const [openModal, setOpenModal] = useState(false);
   const handleOpenModal = () => setOpenModal(true);
@@ -203,18 +172,9 @@ export default function InvoicePage() {
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
-    setIsLoading(true);
   };
-  const handleEditRow = () => {
-    setOpenModal(true);
-    currRowFocus.school = currRowFocus.universityId;
-    currRowFocus.verified = currRowFocus.verify;
-    currRowFocus.status = currRowFocus.status ? "active" : "banned";
-    formik.setValues(currRowFocus);
-    setOpen(null);
-  };
+
   const handleDeleteRow = async () => {
-    setIsDelete(true);
     await InvoiceService.deleteInvoice(currRowFocus.invoiceId);
     setOpen(null);
     setCurrRowFocus(null);
@@ -222,13 +182,22 @@ export default function InvoicePage() {
 
   const handleChangeRowsPerPage = (event) => {
     setPage(0);
-    setIsLoading(true);
     setRowsPerPage(parseInt(event.target.value, 10));
   };
 
   const handleFilterByName = (event) => {
-    setPage(0);
-    setFilterName(event.target.value);
+    startTransition(() => {
+      setPage(0);
+      setFilterName(event.target.value)
+    })
+  };
+
+
+  const handleFilterStatus = (event, value) => {
+    startTransition(() => {
+      setPage(0);
+      setFilterStatus(value)
+    })
   };
 
   const handleDeleteInvoice = (ids) => {
@@ -238,19 +207,6 @@ export default function InvoicePage() {
     setSelected([]);
     console.log(invoiceDataSource);
   };
-
-  const emptyRows =
-    page > 0
-      ? Math.max(0, (1 + page) * rowsPerPage - invoiceDataSource.length)
-      : 0;
-
-  const filteredInvoices = applySortFilter(
-    invoiceDataSource,
-    getComparator(order, orderBy),
-    filterName
-  );
-
-  const isNotFound = !filteredInvoices.length && !!filterName;
 
   const formik = useFormik({
     initialValues: {
@@ -277,12 +233,9 @@ export default function InvoicePage() {
           age: 22,
         };
         await InvoiceService.createInvoice(payload).then((data) => {
-          setIsCreate(true);
           handleCloseModal();
         });
       } else {
-        // setInvoiceDataSource([value, ...invoiceDataSource]);
-        // handleAddInvoice(value);
         const payload = {
           universityId: parseInt(value.school, 10),
           name: value.name,
@@ -292,7 +245,6 @@ export default function InvoicePage() {
           age: 22,
         };
         await InvoiceService.updateInvoice(currRowFocus.id, payload).then((data) => {
-          setIsUpdate(true);
           handleCloseModal();
         });
       }
@@ -301,20 +253,11 @@ export default function InvoicePage() {
   });
 
   useEffect(() => {
-    const getInvoiceList = async () => {
-      await InvoiceService.fetchInvoice({ pageNumber: page, pageSize: rowsPerPage }).then(data => {
-        setInvoiceDataSource(() => [...data?.data?.data]);
-        setTotalRows(data?.data?.paging.totalRecords);
-        setIsLoading(false)
-        setIsCreate(false);
-        setIsUpdate(false);
-        setIsDelete(false);
-        return data;
-      })
-    };
-
-    getInvoiceList();
-  }, [isCreate, isUpdate, isDelete, page, rowsPerPage]);
+    if (data) {
+      setInvoiceDataSource(() => [...data?.data?.data]);
+      setTotalRows(data?.data?.paging.totalRecords);
+    }
+  }, [data]);
 
   return (
     <>
@@ -348,6 +291,7 @@ export default function InvoicePage() {
             filterName={filterName}
             onFilterName={handleFilterByName}
             onDeleteIds={handleDeleteInvoice}
+            onFilterStatus={handleFilterStatus}
           />
 
           <Scrollbar sx={undefined}>
@@ -369,7 +313,6 @@ export default function InvoicePage() {
                       invoiceDataSource.map((row) => {
                         const {
                           invoiceId,
-                          balanceAmount,
                           currency,
                           customer,
                           invoiceDate,
@@ -378,7 +321,7 @@ export default function InvoicePage() {
                           totalDiscount,
                           status,
                           type,
-
+                          invoiceNumber
                         } = row;
                         const selectedInvoice = selected.indexOf(invoiceId) !== -1;
 
@@ -396,20 +339,9 @@ export default function InvoicePage() {
                                 onChange={(event) => handleClick(event, invoiceId)}
                               />
                             </TableCell>
-
-                            {/* <TableCell component="th" scope="row" padding="none">
-                            <Stack
-                              direction="row"
-                              alignItems="center"
-                              spacing={2}
-                            >
-                              <Avatar alt={fullname} src={avatarUrl} />
-                              <Typography variant="subtitle2" noWrap>
-                                {fullname}
-                              </Typography>
-                            </Stack>
-                          </TableCell> */}
-
+                            <TableCell align="left">
+                              {invoiceNumber}
+                            </TableCell>
                             <TableCell align="left">
                               {currency}
                             </TableCell>
@@ -426,31 +358,21 @@ export default function InvoicePage() {
                               {totalDiscount}
                             </TableCell>
                             <TableCell align="left">
-                              {currency}
+                              <Label color={status[0]?.key === "Paid" ? "success" : status[0]?.key === "Due" ? "warning" : "error"}>
+                                {
+                                  (() => {
+                                    switch (status[0]?.key) {
+                                      case "Paid":
+                                        return sentenceCase("Paid");
+                                      case "Overdue":
+                                        return sentenceCase("Overdue");
+                                      default:
+                                        return sentenceCase("Due");
+                                    }
+                                  })()
+                                }
+                              </Label>
                             </TableCell>
-                            <TableCell align="left">
-                              STATUS
-                            </TableCell>
-                            {/* 
-                              <TableCell align="left">{phone}</TableCell>
-                              <TableCell align="left">{role === 0 ? "Admin" : "Invoice"}</TableCell>
-
-                              <TableCell align="left">
-                                <Label color={!status ? "error" : "success"}>
-                                  {
-                                    (() => {
-                                      switch (status) {
-                                        case 0:
-                                          return sentenceCase("banned");
-                                        case 1:
-                                          return sentenceCase("active");
-                                        default:
-                                          return sentenceCase("Unknown");
-                                      }
-                                    })()
-                                  }
-                                </Label>
-                              </TableCell> */}
 
                             <TableCell align="right">
                               <IconButton
@@ -485,7 +407,7 @@ export default function InvoicePage() {
 
                 </TableBody>
 
-                {isNotFound && (
+                {(invoiceDataSource.length < 0 && !isLoading) && (
                   <TableBody>
                     <TableRow>
                       <TableCell align="center" colSpan={6} sx={{ py: 3 }}>
@@ -543,12 +465,7 @@ export default function InvoicePage() {
           },
         }}
       >
-        {/* <MenuItem onClick={handleEditRow}>
-          <Iconify icon={"eva:edit-fill"} sx={{ mr: 2 }} />
-          Edit
-        </MenuItem> */}
-
-        <MenuItem sx={{ color: "error.main" }} onClick={handleDeleteRow}>
+        <MenuItem sx={{ color: "error.main" }} onClick={handleDeleteRow} disabled={true}>
           <Iconify icon={"eva:trash-2-outline"} sx={{ mr: 2 }} />
           Delete
         </MenuItem>
@@ -579,19 +496,7 @@ export default function InvoicePage() {
               value={formik.values.name}
               onChange={formik.handleChange}
               error={formik.touched.name && Boolean(formik.errors.name)}
-            // helperText={formik.touched.name && formik.errors.name}
             />
-            {/* <TextField
-              fullWidth
-              id="school"
-              name="school"
-              label="School"
-              type="school"
-              value={formik.values.school}
-              onChange={formik.handleChange}
-              error={formik.touched.school && Boolean(formik.errors.school)}
-              helperText={formik.touched.school && formik.errors.school}
-            /> */}
 
             <FormControl>
               <InputLabel id="demo-simple-select-label">School</InputLabel>
@@ -605,20 +510,8 @@ export default function InvoicePage() {
                 label="School"
                 type="school"
                 error={formik.touched.school && Boolean(formik.errors.school)}
-              // helperText={formik.touched.status && formik.errors.status}
               >
-                {/* {universityDataSource.map(({ name, id }) => {
-                  return (
-                    <MenuItem key={id} value={id}>
-                      {name}
-                    </MenuItem>
-                  );
-                })} */}
-                {/* <MenuItem value={'active'}>Active</MenuItem>
-                <MenuItem value={'banned'}>Banned</MenuItem> */}
-                {/* <MenuItem value={2}>Thirty</MenuItem> */}
               </Select>
-              {/* <FormHelperText>With label + helper text</FormHelperText>; */}
             </FormControl>
             <TextField
               fullWidth
@@ -629,7 +522,6 @@ export default function InvoicePage() {
               value={formik.values.role}
               onChange={formik.handleChange}
               error={formik.touched.role && Boolean(formik.errors.role)}
-            // helperText={formik.touched.role && formik.errors.role}
             />
             <FormControl>
               <InputLabel id="demo-simple-select-label">Status</InputLabel>
@@ -643,13 +535,10 @@ export default function InvoicePage() {
                 label="Status"
                 type="status"
                 error={formik.touched.status && Boolean(formik.errors.status)}
-              // helperText={formik.touched.status && formik.errors.status}
               >
                 <MenuItem value={"active"}>Active</MenuItem>
                 <MenuItem value={"banned"}>Banned</MenuItem>
-                {/* <MenuItem value={2}>Thirty</MenuItem> */}
               </Select>
-              {/* <FormHelperText>With label + helper text</FormHelperText>; */}
             </FormControl>
             <TextField
               fullWidth
@@ -660,22 +549,11 @@ export default function InvoicePage() {
               value={formik.values.verified}
               onChange={formik.handleChange}
               error={formik.touched.verified && Boolean(formik.errors.verified)}
-            // helperText={formik.touched.verified && formik.errors.verified}
             />
           </Box>
         </DialogContent>
         <DialogActions>
-          {/* <Button
-            color="primary"
-            variant="contained"
-            type="submit"
-            onClick={formik.handleSubmit}
-          >
-            Submit
-          </Button> */}
-          {/* <Button onClick={handleCloseModal}>Close</Button> */}
         </DialogActions>
-        {/* </Box> */}
       </Dialog>
     </>
   );

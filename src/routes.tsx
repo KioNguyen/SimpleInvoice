@@ -15,7 +15,7 @@ export default function Router() {
 
   const navigate = useNavigate();
   const routes = useRoutes(
-    [{
+    user ? [{
       path: '/dashboard',
       element: <DashboardLayout />,
       children: [
@@ -41,7 +41,12 @@ export default function Router() {
     {
       path: '*',
       element: <Navigate to="/404" replace />,
-    }]
+    }] : [
+      {
+        path: '*',
+        element: <LoginPage />,
+      }
+    ]
 
   );
 
