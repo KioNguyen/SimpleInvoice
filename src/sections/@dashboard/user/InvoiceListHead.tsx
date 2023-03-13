@@ -17,7 +17,7 @@ const visuallyHidden = {
 };
 
 InvoiceListHead.propTypes = {
-  order: PropTypes.oneOf(['asc', 'desc']),
+  order: PropTypes.oneOf(['asc', 'desc', '']),
   orderBy: PropTypes.string,
   rowCount: PropTypes.number,
   headLabel: PropTypes.array,
